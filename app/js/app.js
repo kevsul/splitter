@@ -11,7 +11,7 @@ if (typeof web3 !== 'undefined') {
     window.web3 = new Web3(web3.currentProvider);
 } else {
     // Your preferred fallback.
-    window.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545')); 
+    window.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 }
 Promise.promisifyAll(web3.eth, { suffix: "Promise" });
 
@@ -33,24 +33,25 @@ window.addEventListener('load', function() {
             return Splitter.deployed()
                 .then(instance => window.contractAccount = instance.contract.address)
                 .then(() => {
-                    showBalances();
+                    return showBalances();
                 });
         })
         .catch(console.error);
 });
 
 function showBalance(address, elemId) {
-    web3.eth.getBalancePromise(address).then(balance => {
-        balance.toNumber();
+    return web3.eth.getBalancePromise(address).then(balance => {
         $(elemId).html(web3.fromWei(balance.toString(10), 'ether'));
     });
 }
 
 function showBalances() {
-    showBalance(window.funderAccount, '#funder_balance');
-    showBalance(window.receiver1Account, '#receiver1_balance');
-    showBalance(window.receiver2Account, '#receiver2_balance');
-    showBalance(window.contractAccount, '#contract_balance');
+    return Promise.all([
+        showBalance(window.funderAccount, '#funder_balance'),
+        showBalance(window.receiver1Account, '#receiver1_balance'),
+        showBalance(window.receiver2Account, '#receiver2_balance'),
+        showBalance(window.contractAccount, '#contract_balance')
+    ]);
 }
 
 require("file-loader?name=../index.html!../index.html");
@@ -62,7 +63,10 @@ const splitFunds = function() {
             deployed = _deployed;
             var toSplit = $("input[name='amount']").val();
             toSplit = web3.toWei(toSplit, 'ether');
-            return _deployed.splitFunds.sendTransaction({from: window.funderAccount, value: toSplit});
+            return _deployed.splitFunds.sendTransaction({
+                from: window.funderAccount,
+                value: toSplit
+            });
         })
         .then(txHash => {
             $("#status").html("Transaction on the way " + txHash);
