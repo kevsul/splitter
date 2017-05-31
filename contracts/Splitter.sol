@@ -15,17 +15,25 @@ contract Splitter {
   }
 
   function splitFunds() payable {
-    // This doesn't work?
-    //require(msg.sender == funder);
-
     if (msg.sender != funder) {
       return;
     }
 
     uint splitAmount = msg.value / 2;
+    uint toReturn = msg.value - (splitAmount * 2);
 
-    receiver1.send(splitAmount);
-    receiver2.send(splitAmount);
+    if (!receiver1.send(splitAmount)) {
+      toReturn += splitAmount;
+    }
+    if (!receiver2.send(splitAmount)) {
+      toReturn += splitAmount;
+    }
+
+    // If msg.value is odd (and the 2 sends succeed), there will be only 1 wei left over.
+    // Is it worth sending back? It will cost more than that...
+    if (toReturn > 0) {
+      funder.send(toReturn);
+    }
   }
 
   function destroy() {
