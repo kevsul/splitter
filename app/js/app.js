@@ -30,21 +30,27 @@ window.addEventListener('load', function() {
             window.receiver1Account = accounts[1];
             window.receiver2Account = accounts[2];
 
-            showBalances();
-            return Splitter.deployed();
+            return Splitter.deployed()
+                .then(instance => window.contractAccount = instance.contract.address)
+                .then(() => {
+                    showBalances();
+                });
         })
         .catch(console.error);
 });
 
+function showBalance(address, elemId) {
+    web3.eth.getBalancePromise(address).then(balance => {
+        balance.toNumber();
+        $(elemId).html(web3.fromWei(balance.toString(10), 'ether'));
+    });
+}
+
 function showBalances() {
-    var funderBalance = web3.eth.getBalance(window.funderAccount).toNumber();
-    $("#funder_balance").html(web3.fromWei(funderBalance.toString(10), 'ether'));
-
-    var receiver1Balance = web3.eth.getBalance(window.receiver1Account).toNumber();
-    $("#receiver1_balance").html(web3.fromWei(receiver1Balance.toString(10), 'ether'));
-
-    var receiver2Balance = web3.eth.getBalance(window.receiver2Account).toNumber();
-    $("#receiver2_balance").html(web3.fromWei(receiver2Balance.toString(10), 'ether'));
+    showBalance(window.funderAccount, '#funder_balance');
+    showBalance(window.receiver1Account, '#receiver1_balance');
+    showBalance(window.receiver2Account, '#receiver2_balance');
+    showBalance(window.contractAccount, '#contract_balance');
 }
 
 require("file-loader?name=../index.html!../index.html");
